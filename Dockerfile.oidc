@@ -2,8 +2,8 @@
 # Fork PhilippeCaira/plane branch oidc — ajoute le provider Zitadel (backend + frontend)
 ARG PLANE_VERSION=v1.3.0
 
-# ── Backend : patch Python files into stock plane-api image ────────
-FROM makeplane/plane-api:${PLANE_VERSION} AS plane-backend-oidc
+# ── Backend : patch Python files into stock plane-backend image ────
+FROM makeplane/plane-backend:${PLANE_VERSION} AS plane-backend-oidc
 ARG PLANE_VERSION
 USER root
 COPY apps/api/plane/authentication/provider/oauth/zitadel.py /code/plane/authentication/provider/oauth/zitadel.py
