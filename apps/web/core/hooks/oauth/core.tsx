@@ -33,8 +33,9 @@ export const useCoreOAuthConfig = (oauthActionText: string): TOAuthConfigs => {
       (config?.is_google_enabled ||
         config?.is_github_enabled ||
         config?.is_gitlab_enabled ||
-        config?.is_gitea_enabled)) ||
-    false;
+        config?.is_gitea_enabled ||
+        (config as any)?.is_zitadel_enabled)) ||
+    true;
   const oAuthOptions: TOAuthOption[] = [
     {
       id: "google",
@@ -78,6 +79,15 @@ export const useCoreOAuthConfig = (oauthActionText: string): TOAuthConfigs => {
         window.location.assign(`${API_BASE_URL}/auth/gitea/${next_path ? `?next_path=${next_path}` : ``}`);
       },
       enabled: config?.is_gitea_enabled,
+    },
+    {
+      id: "zitadel",
+      text: `${oauthActionText} with Zitadel`,
+      icon: <img src={googleLogo} height={18} width={18} alt="Zitadel Logo" />,
+      onClick: () => {
+        window.location.assign(`${API_BASE_URL}/auth/zitadel/${next_path ? `?next_path=${next_path}` : ``}`);
+      },
+      enabled: true,
     },
   ];
 
