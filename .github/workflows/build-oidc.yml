@@ -1,0 +1,72 @@
+name: Build & push Plane OIDC images
+
+on:
+  push:
+    branches: [oidc]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  UPSTREAM: makeplane/plane
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: plane-backend-oidc, image: plane-backend-oidc }
+          - { name: plane-frontend-oidc, image: plane-frontend-oidc }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: oidc
+          fetch-depth: 0
+
+      - name: Sync with upstream (weekly only)
+        if: github.event_name == 'schedule'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/${{ env.UPSTREAM }}.git || true
+          LATEST_TAG=$(git ls-remote --tags upstream 'refs/tags/v*' | grep -v '{}' | tail -1 | sed 's/.*refs\/tags\///')
+          git fetch upstream "$LATEST_TAG"
+          if git rebase "FETCH_HEAD"; then
+            git push origin oidc --force-with-lease
+          else
+            git rebase --abort
+            echo "::warning::Rebase failed — manual intervention needed"
+          fi
+
+      - name: Lowercase owner
+        run: echo "OWNER_LC=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Detect version
+        id: version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+          [ -z "$VERSION" ] && VERSION="latest"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.oidc
+          target: ${{ matrix.target.name }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ matrix.target.image }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ matrix.target.image }}:latest
