@@ -1,0 +1,27 @@
+# Plane v1.3.0 + Zitadel OIDC provider
+# Fork PhilippeCaira/plane branch oidc — ajoute le provider Zitadel (backend + frontend)
+ARG PLANE_VERSION=v1.3.0
+
+# ── Backend : patch Python files into stock plane-api image ────────
+FROM makeplane/plane-api:${PLANE_VERSION} AS plane-backend-oidc
+ARG PLANE_VERSION
+USER root
+COPY apps/api/plane/authentication/provider/oauth/zitadel.py /code/plane/authentication/provider/oauth/zitadel.py
+COPY apps/api/plane/authentication/views/app/zitadel.py /code/plane/authentication/views/app/zitadel.py
+COPY apps/api/plane/authentication/views/__init__.py /code/plane/authentication/views/__init__.py
+COPY apps/api/plane/authentication/urls.py /code/plane/authentication/urls.py
+
+# ── Frontend : rebuild Next.js avec bouton Zitadel ─────────────────
+FROM node:22-bookworm-slim AS web-builder
+ARG PLANE_VERSION
+RUN apt-get update && apt-get install -y --no-install-recommends git python3 make g++ ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /
+RUN git clone --depth 1 --branch "${PLANE_VERSION}" https://github.com/makeplane/plane.git /build
+WORKDIR /build
+COPY apps/web/core/hooks/oauth/core.tsx apps/web/core/hooks/oauth/core.tsx
+RUN corepack enable && yarn install --immutable && yarn build --filter=web
+
+FROM makeplane/plane-frontend:${PLANE_VERSION} AS plane-frontend-oidc
+ARG PLANE_VERSION
+USER root
+COPY --from=web-builder /build/apps/web/.next /app/apps/web/.next
