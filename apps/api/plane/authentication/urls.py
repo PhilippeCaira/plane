@@ -18,6 +18,8 @@ from .views import (
     GitHubOauthInitiateEndpoint,
     GoogleCallbackEndpoint,
     GoogleOauthInitiateEndpoint,
+    ZitadelCallbackEndpoint,
+    ZitadelOauthInitiateEndpoint,
     MagicGenerateEndpoint,
     MagicSignInEndpoint,
     MagicSignUpEndpoint,
@@ -150,4 +152,7 @@ urlpatterns = [
         GiteaCallbackSpaceEndpoint.as_view(),
         name="space-gitea-callback",
     ),
+    ## Zitadel OIDC
+    path("zitadel/", ZitadelOauthInitiateEndpoint.as_view(), name="zitadel-initiate"),
+    path("zitadel/callback/", ZitadelCallbackEndpoint.as_view(), name="zitadel-callback"),
 ]
