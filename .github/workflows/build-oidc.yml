@@ -51,7 +51,9 @@ jobs:
       - name: Detect version
         id: version
         run: |
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+          # Filtrer les tags non-semver (ex: oidc-base-push/preview/abc) qui
+          # ne sont pas des tags Docker valides. Ne garder que v1.2.3 / 1.2.3.
+          VERSION=$(git tag --list 'v*.*.*' '[0-9]*.*.*' --sort=-version:refname 2>/dev/null | head -1 | sed 's/^v//')
           [ -z "$VERSION" ] && VERSION="latest"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
