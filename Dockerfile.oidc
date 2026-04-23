@@ -10,6 +10,9 @@ COPY apps/api/plane/authentication/provider/oauth/zitadel.py /code/plane/authent
 COPY apps/api/plane/authentication/views/app/zitadel.py /code/plane/authentication/views/app/zitadel.py
 COPY apps/api/plane/authentication/views/__init__.py /code/plane/authentication/views/__init__.py
 COPY apps/api/plane/authentication/urls.py /code/plane/authentication/urls.py
+# Middleware AutoOIDCRedirect (302 GET / → /auth/zitadel/ si user non authent.)
+COPY apps/api/plane/middleware/auto_oidc_redirect.py /code/plane/middleware/auto_oidc_redirect.py
+COPY apps/api/plane/settings/common.py /code/plane/settings/common.py
 
 # ── Frontend : rebuild Vite avec bouton Zitadel ────────────────────
 FROM node:22-alpine AS web-builder
