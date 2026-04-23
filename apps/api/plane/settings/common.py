@@ -338,6 +338,8 @@ SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", 604800))
 SESSION_COOKIE_NAME = os.environ.get("SESSION_COOKIE_NAME", "session-id")
 SESSION_COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", None)
 SESSION_SAVE_EVERY_REQUEST = os.environ.get("SESSION_SAVE_EVERY_REQUEST", "0") == "1"
+SESSION_COOKIE_PATH = "/"
+SESSION_COOKIE_SAMESITE = "Lax"
 
 # Admin Cookie
 ADMIN_SESSION_COOKIE_NAME = "admin-session-id"
@@ -348,7 +350,25 @@ CSRF_COOKIE_SECURE = secure_origins
 CSRF_COOKIE_HTTPONLY = True
 CSRF_TRUSTED_ORIGINS = cors_allowed_origins
 CSRF_COOKIE_DOMAIN = os.environ.get("COOKIE_DOMAIN", None)
+CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_FAILURE_VIEW = "plane.authentication.views.common.csrf_failure"
+
+# Fork OIDC : Plane tourne derrière Traefik en HTTPS, mais plane-api écoute
+# en HTTP interne. Sans SECURE_PROXY_SSL_HEADER, Django set_cookie n'applique
+# pas le flag Secure (qui est requis par Chrome moderne avec SameSite=Lax
+# sur cookies cross-hop), et request.is_secure() renvoie False ce qui peut
+# fausser la construction des redirect URLs OIDC.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+# Si le site tourne forcément en HTTPS (cas production via Traefik), on force
+# Secure=True même si CORS_ALLOWED_ORIGINS n'est pas configuré — c'est la
+# racine du bug cookie session-id manquant en browser :
+# secure_origins vaut False quand CORS n'est pas set → SESSION_COOKIE_SECURE
+# vaut False → Chrome drop le cookie Set-Cookie sur un 302 cross-path HTTPS.
+if os.environ.get("FORCE_SECURE_COOKIES", "1") == "1":
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 ######  Base URLs ######
 
