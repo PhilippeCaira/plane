@@ -85,6 +85,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Fork OIDC : redirige GET / vers /auth/zitadel/ si OIDC_AUTO_REDIRECT=true
+    # et user non authentifié. Doit être APRÈS AuthenticationMiddleware.
+    "plane.middleware.auto_oidc_redirect.AutoOIDCRedirectMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "crum.CurrentRequestUserMiddleware",
     "django.middleware.gzip.GZipMiddleware",
