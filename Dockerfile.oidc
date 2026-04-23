@@ -26,6 +26,7 @@ WORKDIR /
 RUN git clone --depth 1 --branch "${PLANE_VERSION}" https://github.com/makeplane/plane.git /build
 WORKDIR /build
 COPY apps/web/core/hooks/oauth/core.tsx apps/web/core/hooks/oauth/core.tsx
+COPY apps/web/nginx/nginx.conf apps/web/nginx/nginx.conf
 RUN pnpm install --frozen-lockfile && pnpm turbo run build --filter=web
 
 FROM nginx:1.27-alpine AS plane-frontend-oidc
