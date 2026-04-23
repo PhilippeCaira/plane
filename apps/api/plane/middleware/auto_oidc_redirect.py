@@ -24,13 +24,24 @@ class AutoOIDCRedirectMiddleware:
             request.META.get("REMOTE_ADDR") in ("127.0.0.1", "::1")
             and ("Wget" in ua or ua.startswith("curl/"))
         )
+        import sys
+        oidc_on = os.environ.get("OIDC_AUTO_REDIRECT") == "true"
+        in_root = request.path in self.ROOT_PATHS
+        is_get = request.method == "GET"
+        authed = hasattr(request, "user") and request.user.is_authenticated
+        print(
+            f"[auto_oidc] path={request.path!r} ua={ua!r} remote={request.META.get('REMOTE_ADDR')} "
+            f"oidc_on={oidc_on} internal_hc={is_internal_hc} in_root={in_root} "
+            f"is_get={is_get} authed={authed}",
+            file=sys.stderr, flush=True,
+        )
         if (
-            os.environ.get("OIDC_AUTO_REDIRECT") == "true"
+            oidc_on
             and not is_internal_hc
-            and request.method == "GET"
-            and request.path in self.ROOT_PATHS
+            and is_get
+            and in_root
             and request.GET.get("local") != "1"
-            and (not hasattr(request, "user") or not request.user.is_authenticated)
+            and not authed
         ):
             return HttpResponseRedirect("/auth/zitadel/")
         return self.get_response(request)
