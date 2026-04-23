@@ -17,13 +17,12 @@ class AutoOIDCRedirectMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Skip healthcheck interne (wget/curl localhost) pour que Docker
+        # Skip healthcheck interne (wget depuis 127.0.0.1) pour que Docker
         # healthcheck reçoive 200, pas 302 → container stay healthy.
         ua = request.META.get("HTTP_USER_AGENT", "")
         is_internal_hc = (
             request.META.get("REMOTE_ADDR") in ("127.0.0.1", "::1")
-            or "Wget" in ua
-            or "curl" in ua.lower()
+            and ("Wget" in ua or ua.startswith("curl/"))
         )
         if (
             os.environ.get("OIDC_AUTO_REDIRECT") == "true"
