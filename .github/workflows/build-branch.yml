@@ -50,6 +50,12 @@ env:
 jobs:
   branch_build_setup:
     name: Build Setup
+    # Skip sur les forks personnels — l'action composite makeplane/actions/build-push
+    # exige un login Docker Hub inconditionnel (DOCKERHUB_USERNAME/TOKEN absents
+    # chez nous). Tous les jobs en aval ont `needs: [branch_build_setup]` donc
+    # sont automatiquement skipped. Utiliser les workflows OIDC personnels
+    # pour produire les images plane.
+    if: github.repository_owner != 'PhilippeCaira'
     runs-on: ubuntu-22.04
     outputs:
       gh_branch_name: ${{ steps.set_env_variables.outputs.TARGET_BRANCH }}
